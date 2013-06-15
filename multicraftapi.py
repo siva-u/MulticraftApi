@@ -123,7 +123,9 @@ class multicraftapi(object):
   def __call__(self,func,*args):
     if func not in __method:
         raise ValueError("The function not exist. (%r)" % func)
-    elif len(args) < len(__method[func]):
+    if isinstance(__method[func],str):
+        __method[func] = (__method[func],)
+    if len(args) < len(__method[func]):
         raise ValueError("Not enough arguments. (%d < %d)" % (len(args),len(__method[func])))
     elif len(args) > len(__method[func]):
         raise ValueError("Too many arguments.")
