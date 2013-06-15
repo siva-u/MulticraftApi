@@ -131,7 +131,7 @@ class multicraftapi(object):
         raise ValueError("Too many arguments.")
     fparams = OrderedDict()
     for i in xrange(len(__method[func])):
-        if isinstance(i,str):
+        if isinstance(__method[func][i],str):
             fparams[__method[func][i]] = args[i]
         else:
             if "type" in __method[func][i]: # arrays
