@@ -123,25 +123,31 @@ class multicraftapi(object):
   def __call__(self,func,*args):
     if func not in __method:
         raise ValueError("The function not exist. (%r)" % func)
-    elif len(args) < len(__method[func]):
+    if isinstance(__method[func],str):
+        __method[func] = (__method[func],)
+    funclen = reduce(int.__add__,[1
+    for i in __method[func]
+        if not (isinstance(i,dict) and "default" in i)])
+    if len(args) < funclen:
+        #print len(__method[func]),__method[func]
         raise ValueError("Not enough arguments. (%d < %d)" % (len(args),len(__method[func])))
     elif len(args) > len(__method[func]):
-        raise ValueError("Too many arguments.")
+        raise ValueError("Too many arguments. (%d > %d)" % (len(args),len(__method[func])))
     fparams = OrderedDict()
     for i in xrange(len(__method[func])):
-        if isinstance(i,str):
+        if isinstance(__method[func][i],str):
             fparams[__method[func][i]] = args[i]
         else:
             if "type" in __method[func][i]: # arrays
                 assert isinstance(args[i],(list,tuple)),"arg %d is not 'arrays'" % i
                 fparams[__method[func][i]["name"]] = args[i]
-            elif len(args) <= len(__method[func]): # default option
+            else: # default option
                 fparams[__method[func][i]["name"]] = __method[func][i]["default"]
     key = self.key
     for k,i in fparams.items():
         if isinstance(i,(tuple,list)):
             i = fparams[k] = self.strarray(i)
-        key += i
+        key += i if isinstance(i,str) else str(i)
     key += func + self.user
     fparams.update((
         ("_MulticraftAPIMethod",func),
@@ -155,11 +161,28 @@ class multicraftapi(object):
     return data
 
 def main():
+    import sys
+    import pprint
     api = multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
     method = 'findUsers'
     params = (["name","email"], ["test","@example.com"])
-    assert api(method,*params)['success'], "It seem somethings wrong."
-    api()
+    result = api(method,*params)
+    assert result['success'], "It seem somethings wrong => %r" % result['errors']
+    print sys.argv
+    lstmode = 0
+    params = []
+    for x in sys.argv[2:]:
+        if x == "-a":
+            lstmode = 1
+            params.append([])
+            continue
+        if lstmode:
+            params[-1].append(x)
+        else:
+            params.append(x)
+    method = sys.argv[1]
+    print params
+    pprint.pprint(api(method,*params))
 
 if __name__ == "__main__":
     main()
