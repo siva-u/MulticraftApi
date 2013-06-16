@@ -126,13 +126,17 @@ class multicraftapi(object):
         raise ValueError("The function not exist. (%r)" % func)
     if isinstance(__method[func],str):
         __method[func] = (__method[func],)
-    funclen = reduce(int.__add__
-     ,[1 for i in __method[func]
-            if not (isinstance(i,dict) and "default" in i)])
+    funclen = [1 for i in __method[func]
+            if not (isinstance(i,dict) and "default" in i)]
+    funclen = reduce(int.__add__, funclen) if funclen else 0
     if len(args) < funclen:
         #print len(__method[func]),__method[func]
-        raise TypeError("Not enough arguments. (%d < %d)%s" % (len(args),len(__method[func],__method[func])))
+        print "This method usage: "
+        print str(_multicraftapi__method[func])
+        raise TypeError("Not enough arguments. (%d < %d)%s" % (len(args),len(__method[func]),__method[func]))
     elif len(args) > len(__method[func]):
+        print "This method usage: "
+        print str(_multicraftapi__method[func])
         raise TypeError("Too many arguments. (%d > %d) %s" % (len(args),len(__method[func]),__method[func]))
     fparams = OrderedDict()
     for i in xrange(len(__method[func])):
@@ -167,6 +171,7 @@ def search(method):
         for x in sorted(_multicraftapi__method.keys())
             if x.lower().find(method.lower()) != -1]
 
+
 def main():
     import pprint
     api = multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
@@ -181,13 +186,14 @@ def main():
         for x in sorted(_multicraftapi__method.keys()):
             c += 1
             sys.stdout.write(x + ("\n","\t")[bool(c % 3)])
-        print "usage: \n python2 multicraftapi.py findUsers -a name email -a test @example.com"
+        print "usage: \npython2 multicraftapi.py findUsers -a name email -a test @example.com"
         print "python2 multicraftapi.py findCommands 101 -a name -a command"
         return
-    elif len(sys.argv) == 2:
-        print "usage: ",
-        print str(_multicraftapi__method[method])
-        return
+    method = sys.argv[1]
+    # elif len(sys.argv) == 2 and method in _multicraftapi__method:
+    #     print "usage: ",
+    #     print str(_multicraftapi__method[method])
+    #     return
     lstmode = 0
     params = []
     for x in sys.argv[2:]:
@@ -199,7 +205,6 @@ def main():
             params[-1].append(x)
         else:
             params.append(x)
-    method = sys.argv[1]
     try:
         pprint.pprint(api(method,*params))
     except ValueError as e:
@@ -209,3 +214,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
