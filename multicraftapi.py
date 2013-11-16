@@ -107,9 +107,22 @@ class multicraftapi(object):
     self.user = user
     self.key = key
 
+  def __getattribute__(self, name):
+    try:
+        if name in __method:
+            func = lambda *a: self.__call__(name,*a)
+            func.__name__ = name
+            return func
+        else:
+            return object.__getattribute__(self, name)
+    except AttributeError:
+        print "getattribute error"
+        raise
+
   def strarray(self,lst):
     s = "["
     for i in lst:
+        assert isinstance(i,(str,unicode)),"WTF!? %r" % i
         s += '"%s",' % i
     else:
         s = s[:-1] + "]"
@@ -133,14 +146,21 @@ class multicraftapi(object):
         raise TypeError("Too many arguments. (%d > %d) %s" % (len(args),len(__method[func]),__method[func]))
     fparams = OrderedDict()
     for i in xrange(len(__method[func])):
+        #print "type check"
         if isinstance(__method[func][i],str):
+            #print "str, __method[func][i]: %r, args[%r]: %r" (__method[func][i],i,args[i])
             fparams[__method[func][i]] = args[i]
         else:
             if "type" in __method[func][i]: # arrays
+                #print "arrays"
                 assert isinstance(args[i],(list,tuple)),"arg %d is not 'arrays'" % i
                 fparams[__method[func][i]["name"]] = args[i]
             else: # default option
-                fparams[__method[func][i]["name"]] = __method[func][i]["default"]
+                #print "default"
+                try:
+                    fparams[__method[func][i]["name"]] = args[i]
+                except IndexError:
+                    fparams[__method[func][i]["name"]] = __method[func][i]["default"]
     key = self.key
     for k,i in fparams.items():
         if isinstance(i,(tuple,list)):
@@ -152,11 +172,13 @@ class multicraftapi(object):
         ("_MulticraftAPIUser",self.user),
         ("_MulticraftAPIKey", hashlib.md5(key).hexdigest()))
     )
+    print "[API] [DEBUG] ",fparams
     r = requests.get(self.url,params=fparams)
     data = r.json()
     # print key
     # print r.url
     return data
+api = multicraftapi
 
 def search(method):
     print "You maybe want that:"
@@ -164,10 +186,12 @@ def search(method):
         for x in sorted(_multicraftapi__method.keys())
             if x.lower().find(method.lower()) != -1]
 
+def getapi():
+    return multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
 
 def main():
     import pprint
-    api = multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
+    api = getapi()
     method = 'findUsers'
     params = (["name","email"], ["test","@example.com"])
     result = api(method,*params)
@@ -207,5 +231,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
