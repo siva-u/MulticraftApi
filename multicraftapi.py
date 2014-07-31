@@ -1,18 +1,5 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#                    Version 2, December 2004
-#
-# Copyright (C) 2013 Chinacraft <admin@chinacraft.cc>
-#
-# Everyone is permitted to copy and distribute verbatim or modified
-# copies of this license document, and changing it is allowed as long
-# as the name is changed.
-#
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-#
-#  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 _multicraftapi__method = {
     #User functions
@@ -100,6 +87,7 @@ import requests
 import hashlib
 import sys
 from collections import OrderedDict
+from urllib import urlencode
 
 class multicraftapi(object):
   def __init__(self,url,user,key):
@@ -167,14 +155,18 @@ class multicraftapi(object):
             i = fparams[k] = self.strarray(i)
         key += i if isinstance(i,str) else str(i)
     key += func + self.user
+    print "[API] [DEBUG] Key: %r" % key
     fparams.update((
         ("_MulticraftAPIMethod",func),
         ("_MulticraftAPIUser",self.user),
         ("_MulticraftAPIKey", hashlib.md5(key).hexdigest()))
     )
-    print "[API] [DEBUG] ",fparams
-    r = requests.get(self.url,params=fparams)
+    print "[API] [DEBUG] Params:",fparams
+    r = requests.get(self.url,params=urlencode(fparams))
+    print "[API] [DEBUG] Url: %r" % r.url
     data = r.json()
+    if (data['success'] and data['data']) or data['errors']:
+        print data
     # print key
     # print r.url
     return data
@@ -187,8 +179,7 @@ def search(method):
             if x.lower().find(method.lower()) != -1]
 
 def getapi():
-    return multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
-
+    return  multicraftapi('http://example.com/multicraft/api.php', 'demo', '57ce2b0285bd3c5568e0')
 def main():
     import pprint
     api = getapi()
@@ -231,4 +222,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
